@@ -1,0 +1,24 @@
+{
+    "name": "devisfunny/php-shopify-api",
+    "description": "Simple Shopify Api Client",
+    "keywords": ["library", "shopify", "api"],
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Oliver Sosa Cano",
+            "email": "oliver@devisfunny.com"
+        }
+    ],
+    "type": "library",
+    "require": {
+		"php": ">=5.3"
+    },
+	"require-dev": {
+		"phpunit/phpunit": "5.2.*"
+    },
+	"autoload": {
+        "psr-4": {
+            "Devisfunny\\PhpShopifyApi\\": "src/"
+        }
+    }
+}
