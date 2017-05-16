@@ -125,7 +125,7 @@ class ShopifyApiClient
      * @param string $shopname
      * @return int
      */
-    public function is_valid_shop_name($shopname){
+    public static function is_valid_shop_name($shopname){
         return preg_match('/^[a-zA-Z0-9\-]+.myshopify.com$/', $shopname);
     }
 
