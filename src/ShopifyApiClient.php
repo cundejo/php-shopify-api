@@ -2,15 +2,32 @@
 
 namespace Devisfunny\PhpShopifyApi;
 
+/**
+ * Class ShopifyApiClient
+ * In this class are encapsulated all the functions to work with Shopify.
+ *
+ * @package Devisfunny\PhpShopifyApi
+ * @author Oliver Sosa <oliver@devisfunny.com>
+ */
 class ShopifyApiClient
 {
-
+    /**
+     * Return the install URL of the app to the store.
+     * @param $shop
+     * @param $api_key
+     * @return string
+     */
     public static function install_url($shop, $api_key)
     {
         return "http://$shop/admin/api/auth?api_key=$api_key";
     }
 
-
+    /**
+     * Validates all the request from Shopify.
+     * @param $query_params
+     * @param $shared_secret
+     * @return bool
+     */
     public static function is_valid_request($query_params, $shared_secret)
     {
         $seconds_in_a_day = 24 * 60 * 60;
@@ -31,22 +48,41 @@ class ShopifyApiClient
         return (hash_hmac('sha256', $string_params, $shared_secret) === $signature);
     }
 
-
+    /**
+     * Return the permission URL where the store owner see all the permissions required by your app.
+     * @param        $shop
+     * @param        $api_key
+     * @param array  $scope
+     * @param string $redirect_uri
+     * @return string
+     */
     public static function permission_url($shop, $api_key, $scope = array(), $redirect_uri = '')
     {
         $scope = empty($scope) ? '' : '&scope=' . implode(',', $scope);
         $redirect_uri = empty($redirect_uri) ? '' : '&redirect_uri=' . urlencode($redirect_uri);
+
         return "https://$shop/admin/oauth/authorize?client_id=$api_key$scope$redirect_uri";
     }
 
-
+    /**
+     * @param $shop
+     * @param $api_key
+     * @param $shared_secret
+     * @param $code
+     * @return array|mixed
+     */
     public static function oauth_access_token($shop, $api_key, $shared_secret, $code)
     {
         return self::_api('POST', "https://$shop/admin/oauth/access_token", NULL, array('client_id' => $api_key, 'client_secret' => $shared_secret, 'code' => $code));
     }
 
-
-    public static function client($shop, $shops_token, $api_key, $shared_secret, $private_app = false)
+    /**
+     * Generic API client function.
+     * @param $shop
+     * @param $shops_token
+     * @return \Closure
+     */
+    public static function client($shop, $shops_token)
     {
         $baseurl = "https://$shop/";
 
@@ -63,9 +99,19 @@ class ShopifyApiClient
         };
     }
 
+    /**
+     * @param        $method
+     * @param        $url
+     * @param string $query
+     * @param string $payload
+     * @param array  $request_headers
+     * @param array  $response_headers
+     * @return array|mixed
+     * @throws \Devisfunny\PhpShopifyApi\ApiException
+     */
     private static function _api($method, $url, $query = '', $payload = '', $request_headers = array(), &$response_headers = array())
     {
-        $response = wcurl::wcurl($method, $url, $query, $payload, $request_headers, $response_headers);
+        $response = Wcurl::wcurl($method, $url, $query, $payload, $request_headers, $response_headers);
         $response = json_decode($response, true);
 
         if (isset($response['errors']) or ($response_headers['http_status_code'] >= 400)) {
@@ -75,28 +121,50 @@ class ShopifyApiClient
         return (is_array($response) and !empty($response)) ? array_shift($response) : $response;
     }
 
+    /**
+     * @param string $shopname
+     * @return int
+     */
+    public function is_valid_shop_name($shopname){
+        return preg_match('/^[a-zA-Z0-9\-]+.myshopify.com$/', $shopname);
+    }
 
+    /**
+     * @param $response_headers
+     * @return int
+     */
     public static function calls_made($response_headers)
     {
         return self::_shop_api_call_limit_param(0, $response_headers);
     }
 
-
+    /**
+     * @param $response_headers
+     * @return int
+     */
     public static function call_limit($response_headers)
     {
         return self::_shop_api_call_limit_param(1, $response_headers);
     }
 
-
+    /**
+     * @param $response_headers
+     * @return int
+     */
     public static function calls_left($response_headers)
     {
         return self::call_limit($response_headers) - self::calls_made($response_headers);
     }
 
-
+    /**
+     * @param $index
+     * @param $response_headers
+     * @return int
+     */
     private static function _shop_api_call_limit_param($index, $response_headers)
     {
         $params = explode('/', $response_headers['http_x_shopify_shop_api_call_limit']);
+
         return (int)$params[$index];
     }
 }

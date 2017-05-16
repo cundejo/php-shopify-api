@@ -5,6 +5,9 @@ namespace Devisfunny\PhpShopifyApi;
 /**
  * Class Wcurl
  * Simple Curl Wrapper
+ *
+ * @package Devisfunny\PhpShopifyApi
+ * @author Oliver Sosa <oliver@devisfunny.com>
  */
 class Wcurl
 {
@@ -78,7 +81,6 @@ class Wcurl
 
     public static function wcurl_response_headers($msg_header)
     {
-
         $multiple_headers = preg_split("/\r\n\r\n|\n\n|\r\r/", trim($msg_header));
         $last_response_header_lines = array_pop($multiple_headers);
         $response_headers = array();

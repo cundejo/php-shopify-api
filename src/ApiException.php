@@ -2,7 +2,12 @@
 
 namespace Devisfunny\PhpShopifyApi;
 
-
+/**
+ * Class ApiException
+ *
+ * @package Devisfunny\PhpShopifyApi
+ * @author Oliver Sosa <oliver@devisfunny.com>
+ */
 class ApiException extends \Exception
 {
     protected $info;
