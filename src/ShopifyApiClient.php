@@ -78,25 +78,27 @@ class ShopifyApiClient
 
     /**
      * Generic API client function.
-     * @param $shop
-     * @param $shops_token
-     * @return \Closure
+     * @param string $shop Shop name
+     * @param string $shops_token
+     * @param string $path Endpoint in the Shopify API
+     * @param string $method HTTP Method to execute
+     * @param array  $params Parameters to pass
+     * @return array|mixed
      */
-    public static function client($shop, $shops_token)
+    public static function client($shop, $shops_token, $path, $method, $params = array())
     {
         $baseurl = "https://$shop/";
+        $url = $baseurl . ltrim($path, '/');
+        $query = in_array($method, array('GET', 'DELETE')) ? $params : array();
+        $payload = in_array($method, array('POST', 'PUT')) ? stripslashes(json_encode($params)) : array();
 
-        return function ($method, $path, $params = array(), &$response_headers = array()) use ($baseurl, $shops_token) {
-            $url = $baseurl . ltrim($path, '/');
-            $query = in_array($method, array('GET', 'DELETE')) ? $params : array();
-            $payload = in_array($method, array('POST', 'PUT')) ? stripslashes(json_encode($params)) : array();
+        $request_headers = array();
+        array_push($request_headers, "X-Shopify-Access-Token: $shops_token");
+        if (in_array($method, array('POST', 'PUT'))) {
+            array_push($request_headers, "Content-Type: application/json; charset=utf-8");
+        }
 
-            $request_headers = array();
-            array_push($request_headers, "X-Shopify-Access-Token: $shops_token");
-            if (in_array($method, array('POST', 'PUT'))) array_push($request_headers, "Content-Type: application/json; charset=utf-8");
-
-            return self::_api($method, $url, $query, $payload, $request_headers, $response_headers);
-        };
+        return self::_api($method, $url, $query, $payload, $request_headers);
     }
 
     /**
@@ -107,7 +109,7 @@ class ShopifyApiClient
      * @param array  $request_headers
      * @param array  $response_headers
      * @return array|mixed
-     * @throws \Devisfunny\PhpShopifyApi\ApiException
+     * @throws \Devisfunny\PhpShopifyApi\ShopifyApiException
      */
     private static function _api($method, $url, $query = '', $payload = '', $request_headers = array(), &$response_headers = array())
     {
@@ -115,7 +117,8 @@ class ShopifyApiClient
         $response = json_decode($response, true);
 
         if (isset($response['errors']) or ($response_headers['http_status_code'] >= 400)) {
-            throw new ApiException(compact('method', 'path', 'params', 'response_headers', 'response', 'shops_myshopify_domain', 'shops_token'));
+            $errors = (isset($response['errors'])) ? $response['errors'] : $response['error'];
+            throw new ShopifyApiException($errors, $response_headers['http_status_code']);
         }
 
         return (is_array($response) and !empty($response)) ? array_shift($response) : $response;
@@ -125,7 +128,8 @@ class ShopifyApiClient
      * @param string $shopname
      * @return int
      */
-    public static function is_valid_shop_name($shopname){
+    public static function is_valid_shop_name($shopname)
+    {
         return preg_match('/^[a-zA-Z0-9\-]+.myshopify.com$/', $shopname);
     }
 
