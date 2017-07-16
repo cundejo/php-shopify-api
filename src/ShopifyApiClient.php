@@ -90,7 +90,7 @@ class ShopifyApiClient
         $baseurl = "https://$shop/";
         $url = $baseurl . ltrim($path, '/');
         $query = in_array($method, array('GET', 'DELETE')) ? $params : array();
-        $payload = in_array($method, array('POST', 'PUT')) ? stripslashes(json_encode($params)) : array();
+        $payload = in_array($method, array('POST', 'PUT')) ? preg_replace('/\\\\(?!n|\\")/', '', json_encode($params)) : array();
 
         $request_headers = array();
         array_push($request_headers, "X-Shopify-Access-Token: $shops_token");
